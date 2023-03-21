@@ -1,57 +1,52 @@
-// select
-const targetLanguage = document.querySelector("#target-language");
-const sourceLanguage = document.querySelector("#source-language");
-// textarea
-const sourceText = document.querySelector("#source-text");
-const targetText = document.querySelector("#target-text");
-// button
-const btnTranslate = document.querySelector("#btn-translate");
+const selectBreed = document.querySelector("#select-breed");
+const gallery = document.querySelector(".gallery");
+const btnClose = document.querySelector("#btn-close");
+const galleryResult = document.querySelector(".gallery-result");
+const main = document.querySelector("main");
 
-async function getLanguages() {
-  const response = await fetch(
-    "https://text-translator2.p.rapidapi.com/getLanguages",
-    {
-      headers: {
-        "X-RapidAPI-Key": "b5657878f2mshcaf7d95f6103647p1f3120jsnbe67f1f13e54",
-        "X-RapidAPI-Host": "text-translator2.p.rapidapi.com",
-      },
-    }
-  );
+btnClose.onclick = function () {
+  main.style.display = "block";
+
+  btnClose.style.display = "none";
+  galleryResult.style.display = "none";
+};
+
+// Creen una funcion que obtenga el JSON de la API de razas
+//https://dog.ceo/api/breeds/list/all
+const getBreeds = async () => {
+  const response = await fetch("https://dog.ceo/api/breeds/list/all");
   const data = await response.json();
-  renderLanguages(data.data.languages, sourceLanguage);
-  renderLanguages(data.data.languages, targetLanguage);
-}
+  // convierte un object a un array, en este usando los keys
+  const breeds = Object.keys(data.message);
 
-getLanguages();
-
-function renderLanguages(languages, select) {
-  languages.forEach((language) => {
-    select.innerHTML += `<option value="${language.code}">${language.name}</option>`;
+  breeds.forEach((breed) => {
+    selectBreed.innerHTML += `<option value="${breed}">${breed}</option>`;
   });
+};
+
+getBreeds();
+
+function showImage(image) {
+  main.style.display = "none";
+
+  btnClose.style.display = "block";
+  galleryResult.style.display = "block";
+  galleryResult.innerHTML = `<img width="300" src="${image.src}" />`;
 }
 
-btnTranslate.onclick = async function () {
-  if (!sourceLanguage.value || !targetLanguage.value || !sourceText.value)
-    return;
-
-  const encodedParams = new URLSearchParams();
-  encodedParams.append("source_language", sourceLanguage.value);
-  encodedParams.append("target_language", targetLanguage.value);
-  encodedParams.append("text", sourceText.value);
+selectBreed.onchange = async function () {
+  const currentBreed = this.value;
 
   const response = await fetch(
-    "https://text-translator2.p.rapidapi.com/translate",
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-        "X-RapidAPI-Key": "b5657878f2mshcaf7d95f6103647p1f3120jsnbe67f1f13e54",
-        "X-RapidAPI-Host": "text-translator2.p.rapidapi.com",
-      },
-      body: encodedParams,
-    }
+    `https://dog.ceo/api/breed/${currentBreed}/images`
   );
-  const data = await response.json();
 
-  targetText.value = data.data.translatedText;
+  const data = await response.json();
+  const images = data.message;
+
+  gallery.innerHTML = "";
+
+  images.forEach((image) => {
+    gallery.innerHTML += `<img onclick="showImage(this)" src="${image}"/>`;
+  });
 };
